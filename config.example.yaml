@@ -1,0 +1,15 @@
+proxy:
+  base_url: "http://127.0.0.1:8080"
+  api_key: "your-api-key-here"
+
+llm:
+  model: "llama3.2"
+  base_url: "http://127.0.0.1:11434"   # Ollama default
+
+agent:
+  poll_interval: 300   # seconds, used in watch mode
+  folder: null         # null = INBOX; or e.g. "INBOX.Pending" to process a specific folder
+  instructions: |
+    - If the email is from a lead generation agency -> delete
+    - If the email contains an invoice -> move to INBOX.Invoices
+    - All other emails -> mark as read
