@@ -4,6 +4,7 @@ import re
 from typing import Optional
 
 import ollama
+from ollama import ResponseError
 
 from .models import AgentAction
 
@@ -27,7 +28,7 @@ For each email you receive, respond with a JSON object ONLY — no explanations,
 no markdown fences, no extra text. The JSON must have this exact structure:
 
 {{
-  "action": "<one of: mark_read | move | delete | reply>",
+  "action": "<one of: mark_read | move | delete | reply | keep>",
   "target_folder": "<IMAP folder path — required only when action is move>",
   "reason": "<one short sentence explaining your decision>"
 }}
@@ -35,7 +36,7 @@ no markdown fences, no extra text. The JSON must have this exact structure:
 Rules:
 - Use "reply" only if the email clearly requires a personal response.
 - Use "move" only together with a valid "target_folder".
-- If unsure, default to "mark_read".
+- If unsure, use "keep" — do not touch the email.
 - Respond with valid JSON and nothing else.
 """
 
@@ -79,13 +80,21 @@ class LLMClient:
         )
 
         logger.debug("Querying LLM (model=%s) for action decision...", self._model)
-        response = self._client.chat(
-            model=self._model,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": user_message},
-            ],
-        )
+        try:
+            response = self._client.chat(
+                model=self._model,
+                messages=[
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": user_message},
+                ],
+            )
+        except ResponseError as exc:
+            if exc.status_code == 404:
+                raise SystemExit(
+                    f"ERROR: Ollama model '{self._model}' not found.\n"
+                    f"Run 'ollama pull {self._model}' or set a different model in config.yaml."
+                ) from None
+            raise
         raw = response.message.content
         logger.debug("LLM raw response: %s", raw)
 

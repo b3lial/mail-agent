@@ -103,6 +103,9 @@ class Agent:
             self._proxy.delete(uid, folder=folder)
             logger.info("UID=%d deleted. Done.", uid)
 
+        elif act == "keep":
+            logger.info("Keeping UID=%d untouched (no action taken).", uid)
+
         elif act == "reply":
             logger.warning(
                 "Action 'reply' for UID=%d is not yet implemented — "
