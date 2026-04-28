@@ -1,3 +1,4 @@
+import os
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -6,7 +7,8 @@ from mail_agent.models import EmailDetail, EmailSummary, StatusResponse
 from mail_agent.proxy_client import ProxyClient
 
 BASE_URL = "http://127.0.0.1:8080"
-API_KEY = "test-key"
+
+os.environ.setdefault("MAIL_PROXY_API_KEY", "test-key")
 
 SUMMARY_DATA = {
     "uid": 1,
@@ -36,7 +38,7 @@ def _mock_response(data, status_code: int = 200) -> MagicMock:
 
 @pytest.fixture
 def client() -> ProxyClient:
-    return ProxyClient(BASE_URL, API_KEY)
+    return ProxyClient(BASE_URL, os.environ["MAIL_PROXY_API_KEY"])
 
 
 @patch("mail_agent.proxy_client.httpx.get")

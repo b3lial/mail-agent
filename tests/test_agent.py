@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from unittest.mock import MagicMock, call, patch
 
@@ -7,13 +8,15 @@ from mail_agent.agent import Agent
 from mail_agent.config import AgentConfig, Config, LLMConfig, ProxyConfig
 from mail_agent.models import AgentAction, EmailDetail, EmailSummary
 
+os.environ.setdefault("MAIL_PROXY_API_KEY", "test-key")
+
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 
 def make_config(folder=None) -> Config:
     return Config(
-        proxy=ProxyConfig(base_url="http://127.0.0.1:8080", api_key="test-key"),
+        proxy=ProxyConfig(base_url="http://127.0.0.1:8080"),
         llm=LLMConfig(model="llama3.2", base_url="http://localhost:11434"),
         agent=AgentConfig(instructions="- Mark all as read", folder=folder),
     )

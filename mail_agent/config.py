@@ -1,13 +1,27 @@
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
+
 import yaml
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 @dataclass
 class ProxyConfig:
     base_url: str
-    api_key: str
+
+    @property
+    def api_key(self) -> str:
+        key = os.environ.get("MAIL_PROXY_API_KEY", "")
+        if not key:
+            raise SystemExit(
+                "ERROR: Environment variable MAIL_PROXY_API_KEY is not set.\n"
+                "Add it to your .env file or export it in your shell."
+            )
+        return key
 
 
 @dataclass
@@ -34,7 +48,7 @@ class Config:
         with open(path) as f:
             data = yaml.safe_load(f)
 
-        proxy = ProxyConfig(**data["proxy"])
+        proxy = ProxyConfig(**data.get("proxy", {}))
         llm = LLMConfig(**data.get("llm", {}))
         agent = AgentConfig(**data.get("agent", {}))
         return cls(proxy=proxy, llm=llm, agent=agent)
