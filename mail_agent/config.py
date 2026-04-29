@@ -12,6 +12,7 @@ load_dotenv()
 @dataclass
 class ProxyConfig:
     base_url: str
+    timeout: int = 30  # seconds
 
     @property
     def api_key(self) -> str:

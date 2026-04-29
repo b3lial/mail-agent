@@ -14,6 +14,7 @@ class Agent:
         self._proxy = ProxyClient(
             base_url=config.proxy.base_url,
             api_key=config.proxy.api_key,
+            timeout=config.proxy.timeout,
         )
         self._llm = LLMClient(
             model=config.llm.model,

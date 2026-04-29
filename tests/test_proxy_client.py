@@ -1,5 +1,5 @@
 import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -38,12 +38,13 @@ def _mock_response(data, status_code: int = 200) -> MagicMock:
 
 @pytest.fixture
 def client() -> ProxyClient:
-    return ProxyClient(BASE_URL, os.environ["MAIL_PROXY_API_KEY"])
+    c = ProxyClient(BASE_URL, os.environ["MAIL_PROXY_API_KEY"])
+    c._client = MagicMock()  # replace the httpx.Client instance with a mock
+    return c
 
 
-@patch("mail_agent.proxy_client.httpx.get")
-def test_list_unread_returns_summaries(mock_get, client):
-    mock_get.return_value = _mock_response([SUMMARY_DATA])
+def test_list_unread_returns_summaries(client):
+    client._client.get.return_value = _mock_response([SUMMARY_DATA])
 
     result = client.list_unread()
 
@@ -53,19 +54,17 @@ def test_list_unread_returns_summaries(mock_get, client):
     assert result[0].subject == "Test Subject"
 
 
-@patch("mail_agent.proxy_client.httpx.get")
-def test_list_unread_with_folder(mock_get, client):
-    mock_get.return_value = _mock_response([])
+def test_list_unread_with_folder(client):
+    client._client.get.return_value = _mock_response([])
 
     client.list_unread(folder="INBOX.Pending")
 
-    _, kwargs = mock_get.call_args
+    _, kwargs = client._client.get.call_args
     assert kwargs["params"] == {"folder": "INBOX.Pending"}
 
 
-@patch("mail_agent.proxy_client.httpx.get")
-def test_get_email_returns_detail(mock_get, client):
-    mock_get.return_value = _mock_response(DETAIL_DATA)
+def test_get_email_returns_detail(client):
+    client._client.get.return_value = _mock_response(DETAIL_DATA)
 
     result = client.get_email(1)
 
@@ -74,41 +73,37 @@ def test_get_email_returns_detail(mock_get, client):
     assert result.body_text == "Hello world"
 
 
-@patch("mail_agent.proxy_client.httpx.post")
-def test_mark_as_read(mock_post, client):
-    mock_post.return_value = _mock_response({"status": "ok"})
+def test_mark_as_read(client):
+    client._client.post.return_value = _mock_response({"status": "ok"})
 
     result = client.mark_as_read(1)
 
     assert isinstance(result, StatusResponse)
     assert result.status == "ok"
-    mock_post.assert_called_once()
+    client._client.post.assert_called_once()
 
 
-@patch("mail_agent.proxy_client.httpx.post")
-def test_move_sends_correct_body(mock_post, client):
-    mock_post.return_value = _mock_response({"status": "ok"})
+def test_move_sends_correct_body(client):
+    client._client.post.return_value = _mock_response({"status": "ok"})
 
     result = client.move(1, "INBOX.Invoices")
 
     assert result.status == "ok"
-    _, kwargs = mock_post.call_args
+    _, kwargs = client._client.post.call_args
     assert kwargs["json"] == {"target_folder": "INBOX.Invoices"}
 
 
-@patch("mail_agent.proxy_client.httpx.delete")
-def test_delete(mock_delete, client):
-    mock_delete.return_value = _mock_response({"status": "ok"})
+def test_delete(client):
+    client._client.delete.return_value = _mock_response({"status": "ok"})
 
     result = client.delete(1)
 
     assert result.status == "ok"
-    mock_delete.assert_called_once()
+    client._client.delete.assert_called_once()
 
 
-@patch("mail_agent.proxy_client.httpx.get")
-def test_list_folders(mock_get, client):
-    mock_get.return_value = _mock_response(["INBOX", "INBOX.Invoices", "Trash"])
+def test_list_folders(client):
+    client._client.get.return_value = _mock_response(["INBOX", "INBOX.Invoices", "Trash"])
 
     result = client.list_folders()
 
