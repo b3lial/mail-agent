@@ -1,14 +1,13 @@
 # mail-ai-agent
 
-Ein Python-Agent, der ungelesene Mails über einen Mail-Proxy abruft, per lokalem LLM
-(Ollama) analysiert und automatisch Aktionen ausführt (verschieben, löschen, als gelesen
-markieren).
+A Python agent that fetches unread emails via a mail proxy, analyses them using a local
+LLM (Ollama), and automatically performs actions (move, delete, mark as read).
 
-## Voraussetzungen
+## Prerequisites
 
 - Python 3.11+
-- [Ollama](https://ollama.com) läuft lokal (`ollama serve`)
-- Mail-Proxy läuft auf `http://127.0.0.1:8080`
+- [Ollama](https://ollama.com) running locally (`ollama serve`)
+- Mail proxy running at `http://127.0.0.1:8080`
 
 ## Installation
 
@@ -18,58 +17,58 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Konfiguration
+## Configuration
 
 ```bash
 cp config.example.yaml config.yaml
 ```
 
-`config.yaml` anpassen:
+Edit `config.yaml`:
 
 ```yaml
 proxy:
   base_url: "http://127.0.0.1:8080"
-  api_key: "dein-api-key"
+  api_key: "your-api-key"
 
 llm:
-  model: "llama3.2"          # beliebiges Ollama-Modell
+  model: "llama3.2"          # any Ollama model
   base_url: "http://127.0.0.1:11434"
 
 agent:
-  poll_interval: 300         # Sekunden zwischen Polling-Runs (watch-Modus)
-  folder: null               # null = INBOX; oder z.B. "INBOX.Pending"
+  poll_interval: 300         # seconds between polling runs (watch mode)
+  folder: null               # null = INBOX; or e.g. "INBOX.Pending"
   instructions: |
-    - Wenn die Mail von einer Lead-Generierungsagentur stammt -> löschen
-    - Wenn die Mail eine Rechnung enthält -> in den Ordner INBOX.Invoices verschieben
-    - Alle anderen Mails -> als gelesen markieren
+    - If the email is from a lead generation agency -> delete
+    - If the email contains an invoice -> move to folder INBOX.Invoices
+    - All other emails -> mark as read
 ```
 
-> **Hinweis:** `config.yaml` ist in `.gitignore` eingetragen und wird nie committet
-> (enthält den API-Key).
+> **Note:** `config.yaml` is listed in `.gitignore` and will never be committed
+> (it contains the API key).
 
-## Ausführen
+## Running
 
-### Einmalig (alle ungelesenen Mails verarbeiten, dann beenden)
+### One-shot (process all unread emails, then exit)
 
 ```bash
 python -m mail_agent.main run
 ```
 
-### Polling-Loop (läuft bis Ctrl+C)
+### Polling loop (runs until Ctrl+C)
 
 ```bash
 python -m mail_agent.main watch
-# oder mit eigenem Interval:
+# or with a custom interval:
 python -m mail_agent.main watch --interval 60
 ```
 
-### Debug-Logging
+### Debug logging
 
 ```bash
 python -m mail_agent.main -v run
 ```
 
-Alle Optionen:
+All options:
 
 ```
 Usage: python -m mail_agent.main [OPTIONS] COMMAND [ARGS]...
@@ -89,44 +88,43 @@ Commands:
 
 ```bash
 pytest
-# oder mit ausführlicher Ausgabe:
+# or with verbose output:
 pytest -v
 ```
 
-Die Tests mocken sowohl den HTTP-Client (kein laufender Mail-Proxy nötig) als auch
-Ollama (kein laufendes LLM nötig).
+The tests mock both the HTTP client (no running mail proxy required) and
+Ollama (no running LLM required).
 
-## Projektstruktur
+## Project Structure
 
 ```
 mail-ai-agent/
-├── config.example.yaml      # Vorlage für config.yaml
+├── config.example.yaml      # template for config.yaml
 ├── requirements.txt
 ├── mail_agent/
-│   ├── main.py              # CLI-Einstiegspunkt (click)
-│   ├── config.py            # Config-Loading aus YAML
-│   ├── models.py            # Pydantic-Modelle (API-Schemas)
-│   ├── proxy_client.py      # HTTP-Client für den Mail-Proxy
-│   ├── llm.py               # Ollama-Interface + Prompt-Logik
-│   └── agent.py             # Kern-Loop: fetch → analyse → act
+│   ├── main.py              # CLI entry point (click)
+│   ├── config.py            # config loading from YAML
+│   ├── models.py            # Pydantic models (API schemas)
+│   ├── proxy_client.py      # HTTP client for the mail proxy
+│   ├── llm.py               # Ollama interface + prompt logic
+│   └── agent.py             # core loop: fetch → analyse → act
 └── tests/
     ├── test_proxy_client.py
     ├── test_llm.py
     └── test_agent.py
 ```
 
-## Unterstützte Aktionen
+## Supported Actions
 
-| Aktion | Beschreibung |
+| Action | Description |
 |---|---|
-| `mark_read` | Mail als gelesen markieren |
-| `move` | Mail in einen anderen Ordner verschieben |
-| `delete` | Mail löschen (landet im Trash des Proxy) |
-| `reply` | Noch nicht implementiert — fällt auf `mark_read` zurück |
+| `mark_read` | Mark email as read |
+| `move` | Move email to another folder |
+| `delete` | Delete email (goes to the proxy's trash) |
+| `reply` | Not yet implemented — falls back to `mark_read` |
 
-## LLM-Prompt-Sprache
+## LLM Prompt Language
 
-Der System-Prompt und das JSON-Schema sind auf Englisch formuliert, da gängige
-Open-Source-Modelle (llama3.2, mistral) darin am zuverlässigsten strukturierte Antworten
-liefern. Die `instructions` in der Config können auf Deutsch oder Englisch sein — das
-Modell versteht beides.
+The system prompt and JSON schema are written in English, as common open-source models
+(llama3.2, mistral) produce the most reliable structured responses in that language.
+The `instructions` in the config can be in German or English — the model understands both.
