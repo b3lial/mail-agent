@@ -41,7 +41,11 @@ def cli(ctx: click.Context, config_path: str, verbose: bool) -> None:
 def run(ctx: click.Context) -> None:
     """Process all unread emails once, then exit."""
     agent = Agent(ctx.obj["config"])
-    agent.run_once()
+    try:
+        agent.run_once()
+    except Exception as exc:
+        logger.error("Run failed: %s", exc)
+        raise SystemExit(1)
 
 
 @cli.command()
