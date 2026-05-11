@@ -28,7 +28,6 @@ Edit `config.yaml`:
 ```yaml
 proxy:
   base_url: "http://127.0.0.1:8080"
-  api_key: "your-api-key"
 
 llm:
   model: "llama3.2"          # any Ollama model
@@ -43,8 +42,16 @@ agent:
     - All other emails -> mark as read
 ```
 
-> **Note:** `config.yaml` is listed in `.gitignore` and will never be committed
-> (it contains the API key).
+### Credentials
+
+Sensitive values are **not** stored in `config.yaml` but read from environment variables.
+Create a `.env` file in the project root (it is gitignored):
+
+```bash
+MAIL_PROXY_API_KEY=your-api-key
+```
+
+Alternatively, export the variables in your shell before running the agent.
 
 ## Running
 
@@ -121,6 +128,7 @@ mail-ai-agent/
 | `mark_read` | Mark email as read |
 | `move` | Move email to another folder |
 | `delete` | Delete email (goes to the proxy's trash) |
+| `keep` | Leave email untouched (no operation) |
 | `reply` | Not yet implemented — falls back to `mark_read` |
 
 ## LLM Prompt Language
